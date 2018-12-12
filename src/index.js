@@ -1,40 +1,35 @@
 const { GraphQLServer } = require('graphql-yoga')
+const { makeExecutableSchema, mergeSchemas } = require('graphql-tools')
+const { readFileSync } = require('fs')
 const { join } = require('path')
 
-let users = [
-  {
-    name: 'a',
-    age: 1
-  },
-  {
-    name: 'b',
-    age: 2
-  }
-]
+const knex = require('knex')(require('../knexfile'))
 
-const resolvers = {
-  Query: {
-    users: () => users,
-    user: (_, { name }) => users.find(user => user.name === name)
-  },
-  Mutation: {
-    createUser: (_, { name, age }) => {
-      const user = { name, age }
+const userSchema = makeExecutableSchema({
+  typeDefs: readFileSync(join(__dirname, './schemas/user.graphql'), 'utf8'),
+  resolvers: require('./resolvers/userResolver')(knex)
+})
 
-      users.push(user)
+const bookSchema = makeExecutableSchema({
+  typeDefs: readFileSync(join(__dirname, './schemas/book.graphql'), 'utf8'),
+  resolvers: require('./resolvers/bookResolver')(knex)
+})
 
-      return user
-    }
-  },
-  User: {
-    name: root => root.name,
-    age: root => root.age
-  }
+const linkDefs = `
+extend type User {
+  books: [Book!]
 }
 
+extend type Book {
+  author: User
+}
+`
+
 const server = new GraphQLServer({
-  typeDefs: join(__dirname, './schema.graphql'),
-  resolvers
+  schema: mergeSchemas({
+    schemas: [userSchema, bookSchema, linkDefs],
+    resolvers: require('./resolvers/customResolver')(knex)
+  })
 })
 
 server.start(() => console.log('start'))

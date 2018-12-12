@@ -10,6 +10,9 @@
   "author": "Gibran Khrisna Putra <gibrankhrisnaputra@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "graphql-yoga": "^1.16.7"
+    "graphql-tools": "^4.0.3",
+    "graphql-yoga": "^1.16.7",
+    "knex": "^0.16.2",
+    "mysql2": "^1.6.4"
   }
 }
